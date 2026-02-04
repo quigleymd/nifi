@@ -41,6 +41,8 @@ import org.apache.nifi.processor.util.JsonValidator;
 import org.apache.nifi.processors.mongodb.QueryHelper;
 import org.apache.nifi.util.StringUtils;
 import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.bson.BsonValue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -202,9 +204,20 @@ public class FetchGridFS extends AbstractGridFSProcessor implements QueryHelper 
         }
         attrs.put(CoreAttributes.FILENAME.key(), input.getFilename());
         FlowFile output = parent != null ? session.create(parent) : session.create();
-        output = session.write(output, out -> bucket.downloadToStream(input.getObjectId(), out));
-        output = session.putAllAttributes(output, attrs);
-        session.transfer(output, REL_SUCCESS);
-        session.getProvenanceReporter().receive(output, getTransitUri(input.getObjectId(), output, context));
+
+        Object Id = new Object();
+        Id = input.getId();
+
+        if (Id instanceof ObjectId){
+            output = session.write(output, out -> bucket.downloadToStream(input.getObjectId(), out));
+            output = session.putAllAttributes(output, attrs);
+            session.transfer(output, REL_SUCCESS);
+            session.getProvenanceReporter().receive(output, getTransitUri(input.getObjectId(), output, context));
+        } else if (Id instanceof BsonValue){
+            output = session.write(output, out -> bucket.downloadToStream((BsonValue) input.getId(), out));
+            output = session.putAllAttributes(output, attrs);
+            session.transfer(output, REL_SUCCESS);
+            session.getProvenanceReporter().receive(output, getTransitUri((BsonValue) input.getId(), output, context));
+        }
     }
 }

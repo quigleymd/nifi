@@ -33,6 +33,7 @@ import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.util.StringUtils;
 import org.bson.types.ObjectId;
+import org.bson.BsonValue;
 
 import java.util.List;
 import java.util.Set;
@@ -138,6 +139,18 @@ public abstract class AbstractGridFSProcessor extends AbstractProcessor {
         return context.getProperty(BUCKET_NAME).isSet()
             ? context.getProperty(BUCKET_NAME).evaluateAttributeExpressions(input).getValue()
             : null;
+    }
+
+    protected String getTransitUri(BsonValue id, FlowFile input, ProcessContext context) {
+        String bucket = getBucketName(input, context);
+        String uri = clientService.getURI();
+        return new StringBuilder()
+            .append(uri)
+            .append(uri.endsWith("/") ? "" : "/")
+            .append(bucket)
+            .append("/")
+            .append(id.toString())
+            .toString();
     }
 
     protected String getTransitUri(ObjectId id, FlowFile input, ProcessContext context) {

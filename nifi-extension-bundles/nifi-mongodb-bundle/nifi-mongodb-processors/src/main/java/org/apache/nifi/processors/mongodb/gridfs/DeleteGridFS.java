@@ -41,6 +41,8 @@ import org.apache.nifi.processor.util.JsonValidator;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.util.StringUtils;
 import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.bson.BsonValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -154,7 +156,15 @@ public class DeleteGridFS extends AbstractGridFSProcessor {
             MongoCursor cursor = bucket.find(query).iterator();
             if (cursor.hasNext()) {
                 GridFSFile file = (GridFSFile) cursor.next();
-                bucket.delete(file.getObjectId());
+
+                Object Id = new Object();
+                Id = file.getId();
+
+                if (Id instanceof ObjectId){
+                    bucket.delete(file.getObjectId());
+                } else if (Id instanceof BsonValue){
+                    bucket.delete((BsonValue) file.getId());
+                }
 
                 if (!StringUtils.isEmpty(queryAttribute)) {
                     input = session.putAttribute(input, queryAttribute, deleteQuery);
